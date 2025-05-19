@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>じゃんけんやり直し</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="janken_yarinaoshi_style.css" />
+</head>
+
+<body>
+    <h1>じゃんけん</h1>
+
+    <div class="rules">
+        <h2>
+            【ルール】<br />
+            制限時間６０秒以内で高スコアを目指せ！<br />
+            じゃんけんに勝つと　＋２０点<br />
+            負けると　−２０点<br />
+            クリック操作がないと　１秒ごとに ー２０点<br />
+            ⭐️や💩を押しても点数が加減されるよ！<br />
+            大きいものほど加減の数値が大きいよ！
+        </h2>
+    </div>
+
+    <h2 id="score">スコア：0</h2>
+    <h2 id="result"></h2>
+    <h2 id="finalScore"></h2>
+
+    <div class="jankenArea">
+        <div id="comArea">
+            <h3>COM</h3>
+            <div class="comHandStyle" id="comHandImage"></div>
+        </div>
+        <div id="playerArea">
+            <h3>PLAYER</h3>
+            <div id="sentakushi">
+                <div class="handStyle" id="guu">✊</div>
+                <div class="handStyle" id="choki">✌️</div>
+                <div class="handStyle" id="paa">✋</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const handMap = { guu: "✊", choki: "✌️", paa: "✋" };
+        let scoreNumber = 0;
+        let lastActionTime = Date.now();
+        let gameEnded = false;
+        let gameStarted = false;
+
+        function startGame() {
+            setTimeout(() => {
+                gameEnded = true;
+                $(".handStyle").off("click");
+                $("#result").text("⏰ タイムアップ！ゲーム終了！");
+                $("#finalScore").text(`最終スコア：${scoreNumber}`).show();
+            }, 60000);
+
+            setInterval(() => {
+                const now = Date.now();
+                if (!gameEnded && now - lastActionTime >= 1000) {
+                    scoreNumber -= 20;
+                    $("#score").html(`スコア：${scoreNumber}`);
+                    lastActionTime = now;
+                }
+            }, 1000);
+        }
+
+        $(".handStyle").on("click", function () {
+            if (!gameStarted) {
+                gameStarted = true;
+                startGame();
+            }
+            if (gameEnded) return;
+            lastActionTime = Date.now();
+
+            const playerHand = $(this).attr("id");
+            const comHand = Math.ceil(Math.random() * 3);
+            const comHandName =
+                comHand === 1 ? "guu" : comHand === 2 ? "choki" : "paa";
+
+            let winner = "";
+            if (playerHand === comHandName) {
+                winner = "あいこ";
+            } else if (
+                (playerHand === "guu" && comHandName === "choki") ||
+                (playerHand === "choki" && comHandName === "paa") ||
+                (playerHand === "paa" && comHandName === "guu")
+            ) {
+                winner = "You Won🥳";
+                scoreNumber += 20;
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        const size = Math.floor(Math.random() * 70) + 20;
+                        const emoji = $("<div>⭐️</div>").css({
+                            position: "absolute",
+                            top: "0",
+                            right: `${Math.random() * 100}vw`,
+                            fontSize: `${size}px`,
+                            zIndex: 3000,
+                            cursor: "pointer",
+                        });
+                        emoji.on("click", function () {
+                            const point = Math.floor(size / 2);
+                            scoreNumber += point;
+                            $("#score").html(`スコア：${scoreNumber}`);
+                            $(this).remove();
+                        });
+                        $("body").append(emoji);
+                        emoji.animate(
+                            {
+                                top: "100vh",
+                                left: "-50vw",
+                                opacity: 0,
+                            },
+                            3000,
+                            function () {
+                                $(this).remove();
+                            }
+                        );
+                    }, i * 100);
+                }
+            } else {
+                winner = "You Lost🤪";
+                scoreNumber -= 20;
+                for (let i = 0; i < 10; i++) {
+                    setTimeout(() => {
+                        const size = Math.floor(Math.random() * 40) + 20;
+                        const left = Math.floor(Math.random() * 90);
+                        const emoji = $("<div>💩</div>").css({
+                            position: "absolute",
+                            top: "0",
+                            left: `${left}vw`,
+                            fontSize: `${size}px`,
+                            zIndex: 3000,
+                            cursor: "pointer",
+                        });
+                        emoji.on("click", function () {
+                            scoreNumber -= Math.floor(size / 2);
+                            $("#score").html(`スコア：${scoreNumber}`);
+                            $(this).remove();
+                        });
+                        $("body").append(emoji);
+                        emoji.animate(
+                            {
+                                top: "100vh",
+                                opacity: 0,
+                            },
+                            3000,
+                            function () {
+                                $(this).remove();
+                            }
+                        );
+                    }, i * 200);
+                }
+            }
+
+            $("#comHandImage").html(handMap[comHandName]);
+            $("#result").html(winner);
+            $("#score").html(`スコア：${scoreNumber}`);
+        });
+    </script>
+</body>
+
+</html>
